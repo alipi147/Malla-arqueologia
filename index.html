@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Malla Interactiva Arqueología</title>
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; display: flex; flex-direction: column; height: 100vh; }
+        #header { padding: 10px 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; }
+        #network { flex-grow: 1; border: 1px solid lightgray; background: white; }
+        .legend { font-size: 12px; }
+        .info-panel { position: absolute; top: 60px; right: 20px; background: white; padding: 15px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 300px; display: none; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <h2>Malla Curricular Arqueología 2024</h2>
+    <div class="legend">Arrastra los nodos • Haz clic para ver detalles • Scroll para zoom</div>
+</div>
+
+<div id="network"></div>
+<div id="info-panel" class="info-panel">
+    <h3 id="info-title"></h3>
+    <p><strong>Semestre:</strong> <span id="info-semestre"></span></p>
+    <p><strong>Créditos:</strong> <span id="info-creditos"></span></p>
+    <p><strong>Prerrequisitos:</strong> <span id="info-prereq"></span></p>
+</div>
+
+<script type="text/javascript">
+    // DATASET BASADO EN TU ARCHIVO 
+    // Estructura: id (Nombre), label (Nombre visible), level (Semestre), creditos, prereq (Texto original)
+    const rawData = [
+        // Semestre 1
+        { id: "Arqueología General I", sem: 1, cr: 8, pre: "" },
+        { id: "Pueblo Originarios de Chile", sem: 1, cr: 8, pre: "" },
+        { id: "Epistemología", sem: 1, cr: 8, pre: "" },
+        { id: "Expresión Escrita", sem: 1, cr: 8, pre: "" },
+        { id: "Introducción a las Ciencias Sociales", sem: 1, cr: 8, pre: "" },
+        { id: "Inglés I", sem: 1, cr: 10, pre: "" },
+        // Semestre 2
+        { id: "Arqueología General II", sem: 2, cr: 8, pre: "Arqueología General I" },
+        { id: "Arqueología de América I", sem: 2, cr: 8, pre: "Arqueología General I" },
+        { id: "Etnografías Clásicas", sem: 2, cr: 7, pre: "" },
+        { id: "Métodos y Técnicas de Terreno I", sem: 2, cr: 8, pre: "Arqueología General I" },
+        { id: "Matemática", sem: 2, cr: 8, pre: "" },
+        { id: "Inglés II", sem: 2, cr: 10, pre: "Inglés I" },
+        // Semestre 3
+        { id: "Análisis de Material Arqueológico I: Lítica", sem: 3, cr: 7, pre: "Arqueología General II" },
+        { id: "Análisis de Material Arqueológico II: Botánica", sem: 3, cr: 7, pre: "Arqueología General II" },
+        { id: "Arqueología de América II", sem: 3, cr: 7, pre: "Arqueología de América I" },
+        { id: "Etnoarqueología", sem: 3, cr: 8, pre: "Arqueología General II, Etnografías Clásicas" }, // Separado manualmente para lógica
+        { id: "Estadística I", sem: 3, cr: 7, pre: "Matemática" },
+        { id: "Teoría Arqueológica I", sem: 3, cr: 7, pre: "Arqueología General II, Epistemología" },
+        { id: "Optativo Formación General 1", sem: 3, cr: 3, pre: "" }, // Nombre ajustado para unicidad
+        { id: "Optativo Formación Teológica 1", sem: 3, cr: 5, pre: "" },
+        // Semestre 4
+        { id: "Análisis de Material Arqueológico III: Cerámica", sem: 4, cr: 7, pre: "Arqueología General II" },
+        { id: "Análisis de Material Arqueológico IV: Zooarqueología", sem: 4, cr: 7, pre: "Arqueología General II" },
+        { id: "Arqueología del Norte Árido de Chile", sem: 4, cr: 7, pre: "Arqueología General II, Arqueología de América II" },
+        { id: "Métodos y Técnicas de Terreno II", sem: 4, cr: 7, pre: "Métodos y Técnicas de Terreno I" },
+        { id: "Estadística II", sem: 4, cr: 7, pre: "Estadística I" },
+        { id: "Teoría Arqueológica II", sem: 4, cr: 7, pre: "Teoría Arqueológica I" },
+        { id: "Optativo Formación General 2", sem: 4, cr: 5, pre: "" },
+        { id: "Optativo Formación Teológica 2", sem: 4, cr: 3, pre: "" },
+        // Semestre 5
+        { id: "Laboratorio de Arte Rupestre", sem: 5, cr: 8, pre: "Arqueología General II" },
+        { id: "Arqueología de Chile Semiárido", sem: 5, cr: 7, pre: "Arqueología General II, Arqueología de América I" },
+        { id: "Arqueología de Chile Centro-Sur", sem: 5, cr: 7, pre: "Arqueología General II, Arqueología de América I" },
+        { id: "Métodos y Técnicas de Terreno III", sem: 5, cr: 10, pre: "Métodos y Técnicas de Terreno II" },
+        { id: "Ética Arqueológica", sem: 5, cr: 8, pre: "Arqueología General II" },
+        { id: "Formación complementaria 1", sem: 5, cr: 10, pre: "" },
+        // Semestre 6
+        { id: "Laboratorio de Especialización I", sem: 6, cr: 10, pre: "Análisis de Material Arqueológico I: Lítica o Análisis de Material Arqueológico II: Botánica" },
+        { id: "Laboratorio de Bioarqueología", sem: 6, cr: 8, pre: "Arqueología General II, Ética Arqueológica" },
+        { id: "Arqueología Histórica", sem: 6, cr: 8, pre: "Arqueología General II, Introducción a las Ciencias Sociales" },
+        { id: "Arqueología de la Patagonia Chilena", sem: 6, cr: 7, pre: "Arqueología de América I" },
+        { id: "Gestión del Patrimonio", sem: 6, cr: 8, pre: "Arqueología General II, Ética Arqueológica" },
+        { id: "Teoría Arqueológica III", sem: 6, cr: 8, pre: "Teoría Arqueológica II" },
+        // Semestre 7
+        { id: "Laboratorio de Especialización II", sem: 7, cr: 10, pre: "Análisis de Material Arqueológico III: Cerámica o Análisis de Material Arqueológico IV: Zooarqueología" },
+        { id: "Arqueología Contemporánea", sem: 7, cr: 7, pre: "Arqueología Histórica, Teoría Arqueológica II" },
+        { id: "Métodos y Técnicas de Terreno IV", sem: 7, cr: 8, pre: "Métodos y Técnicas de Terreno III" },
+        { id: "Museología", sem: 7, cr: 7, pre: "Arqueología General II" },
+        { id: "Teoría Arqueológica IV", sem: 7, cr: 8, pre: "Teoría Arqueológica II" },
+        { id: "Formación complementaria 2", sem: 7, cr: 10, pre: "" },
+        // Semestre 8
+        { id: "Interpretación Contextual", sem: 8, cr: 8, pre: "Laboratorio de Especialización I" },
+        { id: "Taller de Diseño", sem: 8, cr: 8, pre: "Laboratorio de Especialización I" },
+        { id: "Arqueología y Sociedad", sem: 8, cr: 7, pre: "Etnoarqueología" },
+        { id: "Sistema de Evaluación Ambiental", sem: 8, cr: 8, pre: "Ética Arqueológica" },
+        { id: "Teoría Arqueológica V", sem: 8, cr: 8, pre: "Teoría Arqueológica III, Teoría Arqueológica IV" },
+        // Semestre 9 (Nota: "Todo" se conecta visualmente al semestre 8 para orden)
+        { id: "Seminario de Grado", sem: 9, cr: 15, pre: "Todo (Malla hasta semestre 8)" },
+        { id: "Práctica Profesional", sem: 9, cr: 25, pre: "Todo (Malla hasta semestre 8)" },
+        // Semestre 10
+        { id: "Seminario de Título", sem: 10, cr: 50, pre: "Todo (Malla hasta semestre 9)" }
+    ];
+
+    // Procesamiento de Nodos y Aristas
+    const nodes = new vis.DataSet();
+    const edges = new vis.DataSet();
+    const map = new Map(); // Para búsqueda rápida
+
+    rawData.forEach(item => {
+        // Color por semestre
+        const colors = ["#E3F2FD", "#BBDEFB", "#90CAF9", "#64B5F6", "#42A5F5", "#2196F3", "#1E88E5", "#1976D2", "#1565C0", "#0D47A1"];
+        const color = colors[item.sem - 1] || "#ddd";
+        
+        nodes.add({
+            id: item.id,
+            label: `${item.id}\n(${item.cr} cr)`,
+            level: item.sem,
+            color: { background: color, border: "#2c3e50" },
+            shape: "box",
+            font: { multi: true, size: 14 },
+            widthConstraint: { maximum: 150 }
+        });
+        map.set(item.id, true);
+    });
+
+    // Crear conexiones
+    rawData.forEach(item => {
+        if (!item.pre) return;
+
+        // Caso especial "Todo"
+        if (item.pre.includes("Todo")) {
+            // Conectamos visualmente al semestre anterior para mantener flujo
+            if(item.sem === 9) {
+                 edges.add({ from: "Teoría Arqueológica V", to: item.id, dashes: true, label: "Req. Todo" });
+            } else if (item.sem === 10) {
+                 edges.add({ from: "Seminario de Grado", to: item.id, dashes: true });
+                 edges.add({ from: "Práctica Profesional", to: item.id, dashes: true });
+            }
+            return;
+        }
+
+        // Separar por " y " o " o " o ","
+        // Nota: Simplificamos lógica visual: Si dice "A o B", mostramos flechas de ambos.
+        const prereqs = item.pre.split(/ y | o |,/); 
+        
+        prereqs.forEach(p => {
+            let pName = p.trim();
+            // Correcciones manuales de nombres que difieren ligeramente en pre-requisito vs nombre real
+            if (pName === "Introducción a las Cs. Sociales") pName = "Introducción a las Ciencias Sociales";
+            
+            if (map.has(pName)) {
+                edges.add({ from: pName, to: item.id, arrows: "to" });
+            }
+        });
+    });
+
+    // Configuración del Grafo
+    const container = document.getElementById('network');
+    const data = { nodes: nodes, edges: edges };
+    const options = {
+        layout: {
+            hierarchical: {
+                direction: "LR", // Izquierda a Derecha
+                sortMethod: "directed",
+                levelSeparation: 250,
+                nodeSpacing: 150
+            }
+        },
+        physics: false, // Estático para que parezca malla
+        interaction: { dragNodes: false, hover: true }
+    };
+
+    const network = new vis.Network(container, data, options);
+
+    // Evento Click
+    network.on("click", function (params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            const item = rawData.find(i => i.id === nodeId);
+            if (item) {
+                document.getElementById('info-panel').style.display = 'block';
+                document.getElementById('info-title').innerText = item.id;
+                document.getElementById('info-semestre').innerText = item.sem;
+                document.getElementById('info-creditos').innerText = item.cr;
+                document.getElementById('info-prereq').innerText = item.pre || "Ninguno";
+            }
+        } else {
+            document.getElementById('info-panel').style.display = 'none';
+        }
+    });
+</script>
+
+</body>
+</html>
