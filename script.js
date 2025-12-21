@@ -1,7 +1,7 @@
 // Datos actualizados
 const mallaData = [
     // --- SEMESTRE 1 ---
-    { id: "s1_1", name: "Arqueología General I", semestre: 1, credits: 8, req: [] },
+    { id: "s1_1", name: "Arqueología General I", sem: 1, credits: 8, req: [] },
     { id: "s1_2", name: "Pueblo Originarios de Chile", sem: 1, credits: 8, req: [] },
     { id: "s1_3", name: "Epistemología", sem: 1, credits: 8, req: [] },
     { id: "s1_4", name: "Expresión Escrita", sem: 1, credits: 8, req: [] },
@@ -50,4 +50,156 @@ const mallaData = [
     // --- SEMESTRE 7 ---
     { id: "s7_1", name: "Laboratorio de Especialización II", sem: 7, credits: 10, req: ["s4_1", "s4_2"], reqMode: "OR" },
     { id: "s7_2", name: "Arqueología Contemporánea", sem: 7, credits: 7, req: ["s6_3", "s4_6"] },
-    { id: "s7_3", name: "Métodos y Técnicas de Terreno IV", sem: 7, credits: 8, req
+    { id: "s7_3", name: "Métodos y Técnicas de Terreno IV", sem: 7, credits: 8, req: ["s5_4"] },
+    { id: "s7_4", name: "Museología", sem: 7, credits: 7, req: ["s2_1"] },
+    { id: "s7_5", name: "Teoría Arqueológica IV", sem: 7, credits: 8, req: ["s4_6"] },
+
+    // --- SEMESTRE 8 ---
+    { id: "s8_1", name: "Interpretación Contextual", sem: 8, credits: 8, req: ["s6_1"] },
+    { id: "s8_2", name: "Taller de Diseño", sem: 8, credits: 8, req: ["s6_1"] },
+    { id: "s8_3", name: "Arqueología y Sociedad", sem: 8, credits: 7, req: ["s3_4"] },
+    { id: "s8_4", name: "Sistema de Evaluación Ambiental", sem: 8, credits: 8, req: ["s5_5"] },
+    { id: "s8_5", name: "Teoría Arqueológica V", sem: 8, credits: 8, req: ["s6_6", "s7_5"] },
+
+    // --- SEMESTRE 9 ---
+    { id: "s9_1", name: "Seminario de Grado", sem: 9, credits: 15, req: ["TODO_S1_S8"] },
+    { id: "s9_2", name: "Práctica Profesional", sem: 9, credits: 25, req: ["TODO_S1_S8"] },
+
+    // --- SEMESTRE 10 ---
+    { id: "s10_1", name: "Seminario de Título", sem: 10, credits: 50, req: ["TODO_S1_S9"] }
+];
+
+let progress = JSON.parse(localStorage.getItem('mallaArqueoProgress')) || {};
+
+function init() {
+    renderMalla();
+    updateStatus();
+}
+
+function renderMalla() {
+    const container = document.getElementById('malla-container');
+    container.innerHTML = '';
+    
+    const maxSem = Math.max(...mallaData.map(r => r.sem));
+
+    for (let i = 1; i <= maxSem; i++) {
+        const col = document.createElement('div');
+        col.className = 'semestre-col';
+        
+        // 1. Título del Semestre (CAMBIO AQUÍ: Dice "Semestre" completo)
+        const title = document.createElement('div');
+        title.className = 'semestre-title';
+        title.textContent = `Semestre ${i}`; 
+        col.appendChild(title);
+
+        // 2. Calcular créditos totales del semestre
+        const ramosSemestre = mallaData.filter(r => r.sem === i);
+        const totalCreditos = ramosSemestre.reduce((sum, r) => sum + r.credits, 0);
+
+        // 3. Crear el elemento visual de los créditos
+        const creditsDiv = document.createElement('div');
+        creditsDiv.className = 'semestre-credits';
+        creditsDiv.id = `credits-sem-${i}`;
+        creditsDiv.textContent = `0 / ${totalCreditos}`;
+        col.appendChild(creditsDiv);
+
+        // 4. Crear las tarjetas de los ramos
+        ramosSemestre.forEach(ramo => {
+            const card = document.createElement('div');
+            card.id = `card-${ramo.id}`;
+            card.className = 'ramo-card locked';
+            card.onclick = () => toggleRamo(ramo.id);
+            
+            card.innerHTML = `
+                <span>${ramo.name}</span>
+                <span class="creditos">${ramo.credits} cr.</span>
+            `;
+            col.appendChild(card);
+        });
+
+        container.appendChild(col);
+    }
+}
+
+function checkPrerequisites(ramo) {
+    if (ramo.req.length === 0) return true;
+
+    if (ramo.req.includes("TODO_S1_S8")) {
+        const ramosHastaSem8 = mallaData.filter(r => r.sem <= 8);
+        return ramosHastaSem8.every(r => progress[r.id] === true);
+    }
+    
+    if (ramo.req.includes("TODO_S1_S9")) {
+        const ramosHastaSem9 = mallaData.filter(r => r.sem <= 9);
+        return ramosHastaSem9.every(r => progress[r.id] === true);
+    }
+
+    if (ramo.reqMode === 'OR') {
+        return ramo.req.some(reqId => progress[reqId] === true);
+    }
+
+    return ramo.req.every(reqId => progress[reqId] === true);
+}
+
+function updateStatus() {
+    // 1. Actualizar colores y bloqueos
+    mallaData.forEach(ramo => {
+        const card = document.getElementById(`card-${ramo.id}`);
+        const isApproved = progress[ramo.id] === true;
+        const canTake = checkPrerequisites(ramo);
+
+        card.className = 'ramo-card';
+
+        if (isApproved) {
+            card.classList.add('approved');
+        } else if (canTake) {
+            card.classList.add('available');
+        } else {
+            card.classList.add('locked');
+        }
+    });
+
+    // 2. Actualizar contadores de créditos
+    const maxSem = Math.max(...mallaData.map(r => r.sem));
+    for (let i = 1; i <= maxSem; i++) {
+        const ramosSem = mallaData.filter(r => r.sem === i);
+        
+        const creditosAprobados = ramosSem
+            .filter(r => progress[r.id] === true)
+            .reduce((sum, r) => sum + r.credits, 0);
+        
+        const creditosTotales = ramosSem.reduce((sum, r) => sum + r.credits, 0);
+
+        const creditsDiv = document.getElementById(`credits-sem-${i}`);
+        if (creditsDiv) {
+            creditsDiv.textContent = `${creditosAprobados} / ${creditosTotales}`;
+        }
+    }
+}
+
+function toggleRamo(id) {
+    const card = document.getElementById(`card-${id}`);
+    
+    if (card.classList.contains('locked') && !card.classList.contains('approved')) {
+        return; 
+    }
+
+    if (progress[id]) {
+        delete progress[id];
+    } else {
+        progress[id] = true;
+    }
+
+    localStorage.setItem('mallaArqueoProgress', JSON.stringify(progress));
+    updateStatus();
+}
+
+function resetMalla() {
+    if(confirm("¿Reiniciar progreso?")) {
+        progress = {};
+        localStorage.removeItem('mallaArqueoProgress');
+        updateStatus();
+    }
+}
+
+init();
