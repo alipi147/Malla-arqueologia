@@ -1,11 +1,9 @@
 :root {
-    --bg-color: #fff0f5; /* Lavender Blush (fondo muy suave) */
-    --card-locked: #e6e6e6; /* Gris para bloqueados */
-    --card-available: #ffc1cc; /* Rosa chicle suave para disponibles */
-    --card-approved: #d16d8a; /* Rosa viejo intenso para aprobados */
+    --bg-color: #fff0f5;
+    --card-locked: #e8e8e8;
+    --card-available: #ffc1cc;
+    --card-approved: #d16d8a;
     --text-dark: #4a4a4a;
-    --text-light: #ffffff;
-    --accent: #ffb7b2; /* Melón suave */
 }
 
 body {
@@ -17,16 +15,14 @@ body {
     text-align: center;
 }
 
-header {
-    margin-bottom: 30px;
-}
+header { margin-bottom: 30px; }
 
 .leyenda span {
     display: inline-block;
     padding: 5px 15px;
-    margin: 0 10px;
+    margin: 0 5px;
     border-radius: 15px;
-    font-size: 0.9em;
+    font-size: 0.8em;
 }
 .ind-locked { background-color: var(--card-locked); color: #888; }
 .ind-avail { background-color: var(--card-available); color: var(--text-dark); font-weight: bold; }
@@ -34,18 +30,18 @@ header {
 
 .malla-grid {
     display: flex;
-    flex-wrap: nowrap;
     overflow-x: auto;
     gap: 15px;
     padding-bottom: 20px;
     align-items: flex-start;
+    justify-content: flex-start; /* Alineación a la izquierda para scroll */
 }
 
 .semestre-col {
-    min-width: 160px;
+    min-width: 150px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .semestre-title {
@@ -53,50 +49,46 @@ header {
     color: var(--card-approved);
     margin-bottom: 5px;
     text-transform: uppercase;
-    font-size: 0.9em;
+    font-size: 0.85em;
 }
 
 .ramo-card {
-    padding: 10px;
+    padding: 8px;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    font-size: 0.85em;
-    min-height: 60px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    font-size: 0.8em;
+    min-height: 55px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    position: relative;
 }
 
-/* Estados de los ramos */
 .locked {
     background-color: var(--card-locked);
     color: #999;
     cursor: not-allowed;
-    opacity: 0.7;
 }
 
 .available {
     background-color: var(--card-available);
-    color: #892b45; /* Letra oscura para contraste */
-    font-weight: bold;
-    transform: scale(1);
+    color: #892b45;
     border: 2px solid #ff9eb0;
+    font-weight: bold;
 }
 
 .approved {
     background-color: var(--card-approved);
     color: white;
-    text-decoration: line-through; /* Opcional: tachar texto */
+    text-decoration: line-through;
     opacity: 0.9;
 }
 
 .creditos {
     font-size: 0.75em;
-    margin-top: 5px;
+    margin-top: 4px;
     opacity: 0.8;
 }
 
@@ -104,10 +96,10 @@ header {
     background-color: white;
     border: 1px solid var(--card-approved);
     color: var(--card-approved);
-    padding: 5px 10px;
+    padding: 5px 15px;
     border-radius: 5px;
     cursor: pointer;
-    margin-top: 10px;
+    margin-top: 15px;
 }
 .btn-reset:hover {
     background-color: var(--card-approved);
