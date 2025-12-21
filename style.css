@@ -87,7 +87,7 @@ header { margin-bottom: 30px; }
 .available {
     background-color: var(--card-available);
     color: #892b45;
-    border: 2px solid #ff9eb0;
+    border: 2px solid #f2a0af;
     font-weight: bold;
 }
 
