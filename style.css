@@ -34,7 +34,7 @@ header { margin-bottom: 30px; }
     gap: 15px;
     padding-bottom: 20px;
     align-items: flex-start;
-    justify-content: flex-start; /* Alineación a la izquierda para scroll */
+    justify-content: flex-start;
 }
 
 .semestre-col {
@@ -47,9 +47,21 @@ header { margin-bottom: 30px; }
 .semestre-title {
     font-weight: bold;
     color: var(--card-approved);
-    margin-bottom: 5px;
+    margin-bottom: 0px; /* Reducido para acercar el contador */
     text-transform: uppercase;
     font-size: 0.85em;
+}
+
+/* NUEVO: Estilo para el contador de créditos */
+.semestre-credits {
+    font-size: 0.9em;
+    color: #892b45; /* Un tono más oscuro que el rosa */
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    padding: 2px 8px;
+    margin-bottom: 5px;
+    align-self: center;
+    font-weight: bold;
 }
 
 .ramo-card {
