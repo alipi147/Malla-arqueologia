@@ -2,133 +2,27 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Malla Interactiva Arqueología</title>
-    
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
-    
-    <style>
-        /* CSS RESET para asegurar pantalla completa */
-        html, body {
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* Evita el scroll doble */
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f0f0f0;
-        }
-
-        #header {
-            height: 60px;
-            background: #2c3e50;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 10;
-            position: relative;
-        }
-
-        /* Forzamos al contenedor a ocupar el espacio restante ABSOLUTAMENTE */
-        #network {
-            position: absolute;
-            top: 60px;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #ffffff;
-            width: 100%;
-        }
-
-        .legend { font-size: 0.8em; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 3px; }
-
-        /* Mensaje de error visible para el usuario */
-        #status-msg {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: white;
-            padding: 20px;
-            border: 2px solid #ccc;
-            text-align: center;
-            z-index: 100;
-            max-width: 80%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div id="header">
-    <div><strong>Malla Arqueología</strong></div>
-    <div class="legend">
-        <div><span class="dot" style="background:#81C784;"></span>Aprobado</div>
-        <div><span class="dot" style="background:#E0E0E0;"></span>Bloqueado</div>
-    </div>
-</div>
+    <header>
+        <h1>Mi Malla de Arqueología</h1>
+        <p>Haz clic en un ramo para aprobarlo. Los siguientes se desbloquearán automáticamente.</p>
+        <div class="leyenda">
+            <span class="ind-locked">Bloqueado</span>
+            <span class="ind-avail">Disponible</span>
+            <span class="ind-approved">Aprobado</span>
+        </div>
+        <button onclick="resetMalla()" class="btn-reset">Reiniciar Malla</button>
+    </header>
 
-<div id="network"></div>
+    <div id="malla-container" class="malla-grid">
+        </div>
 
-<div id="status-msg">
-    <h2>Cargando...</h2>
-    <p>Si esto no desaparece en 3 segundos, hay un error.</p>
-</div>
-
-<script type="text/javascript">
-    // --- MANEJADOR DE ERRORES GLOBAL ---
-    window.onerror = function(message, source, lineno, colno, error) {
-        const status = document.getElementById('status-msg');
-        status.style.borderColor = "red";
-        status.innerHTML = `<h3 style='color:red'>Error Detectado</h3>
-                            <p>${message}</p>
-                            <p style='font-size:0.8em'>Línea: ${lineno}</p>`;
-        return false;
-    };
-
-    // Verificamos si la librería cargó
-    if (typeof vis === 'undefined') {
-        throw new Error("La librería Vis.js no se pudo cargar. Revisa tu conexión.");
-    }
-
-    try {
-        // --- 1. DATOS ---
-        const rawData = [
-            { id: "Arqueología General I", sem: 1, req: [] },
-            { id: "Pueblo Originarios de Chile", sem: 1, req: [] },
-            { id: "Epistemología", sem: 1, req: [] },
-            { id: "Expresión Escrita", sem: 1, req: [] },
-            { id: "Introducción a las Ciencias Sociales", sem: 1, req: [] },
-            { id: "Inglés I", sem: 1, req: [] },
-            { id: "Arqueología General II", sem: 2, req: ["Arqueología General I"] },
-            { id: "Arqueología de América I", sem: 2, req: ["Arqueología General I"] },
-            { id: "Etnografías Clásicas", sem: 2, req: [] },
-            { id: "Métodos y Técnicas de Terreno I", sem: 2, req: ["Arqueología General I"] },
-            { id: "Matemática", sem: 2, req: [] },
-            { id: "Inglés II", sem: 2, req: ["Inglés I"] },
-            { id: "Análisis de Material Arqueológico I: Lítica", sem: 3, req: ["Arqueología General II"] },
-            { id: "Análisis de Material Arqueológico II: Botánica", sem: 3, req: ["Arqueología General II"] },
-            { id: "Arqueología de América II", sem: 3, req: ["Arqueología de América I"] },
-            { id: "Etnoarqueología", sem: 3, req: ["Arqueología General II", "Etnografías Clásicas"] },
-            { id: "Estadística I", sem: 3, req: ["Matemática"] },
-            { id: "Teoría Arqueológica I", sem: 3, req: ["Arqueología General II", "Epistemología"] },
-            { id: "Optativo FG 1", sem: 3, label: "Optativo FG 1", req: [] },
-            { id: "Optativo Teológico 1", sem: 3, label: "Optativo Teol 1", req: [] },
-            { id: "Análisis de Material Arqueológico III: Cerámica", sem: 4, req: ["Arqueología General II"] },
-            { id: "Análisis de Material Arqueológico IV: Zooarqueología", sem: 4, req: ["Arqueología General II"] },
-            { id: "Arqueología del Norte Árido de Chile", sem: 4, req: ["Arqueología General II", "Arqueología de América II"] },
-            { id: "Métodos y Técnicas de Terreno II", sem: 4, req: ["Métodos y Técnicas de Terreno I"] },
-            { id: "Estadística II", sem: 4, req: ["Estadística I"] },
-            { id: "Teoría Arqueológica II", sem: 4, req: ["Teoría Arqueológica I"] },
-            { id: "Optativo FG 2", sem: 4, label: "Optativo FG 2", req: [] },
-            { id: "Optativo Teológico 2", sem: 4, label: "Optativo Teol 2", req: [] },
-            { id: "Laboratorio de Arte Rupestre", sem: 5, req: ["Arqueología General II"] },
-            { id: "Arqueología de Chile Semiárido", sem: 5, req: ["Arqueología General II", "Arqueología de América I"] },
-            { id: "Arqueología de Chile Centro-Sur", sem: 5, req: ["Arqueología General II", "Arqueología de América I"] },
-            { id: "Métodos y Técnicas de Terreno III", sem: 5, req: ["Métodos y Técnicas de Terreno II"] },
-            { id: "Ética Arqueológica", sem: 5, req: ["Arqueología General II"] },
-            { id: "Formación complementaria 1", sem: 5, req: [] },
-            { id: "Laboratorio de Especialización I", sem: 6, req:
+    <script src="script.js"></script>
+</body>
+</html>
