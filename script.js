@@ -1,7 +1,7 @@
 // Datos actualizados
 const mallaData = [
     // --- SEMESTRE 1 ---
-    { id: "s1_1", name: "Arqueología General I", sem: 1, credits: 8, req: [] },
+    { id: "s1_1", name: "Arqueología General I", semestre: 1, credits: 8, req: [] },
     { id: "s1_2", name: "Pueblo Originarios de Chile", sem: 1, credits: 8, req: [] },
     { id: "s1_3", name: "Epistemología", sem: 1, credits: 8, req: [] },
     { id: "s1_4", name: "Expresión Escrita", sem: 1, credits: 8, req: [] },
